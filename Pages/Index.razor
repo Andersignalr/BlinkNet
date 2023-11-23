@@ -1,0 +1,59 @@
+﻿@page "/"
+
+
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@inject IJSRuntime js
+
+
+<input type="text" @bind="novaMensagem"/>
+<button @onclick="EnviarMensagem">Enviar</button>
+
+<ul>
+	@foreach (var mensagem in mensagens)
+	{
+		<li>@mensagem</li>
+	}
+</ul>
+
+@code{
+	private List<string> mensagens = new List<string>();
+	private string novaMensagem = "";
+
+	private HubConnection hubConnection;
+
+	protected override async Task OnInitializedAsync()
+	{
+		hubConnection = new HubConnectionBuilder()
+		.WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+		.Build();
+
+		hubConnection.On<string>("ReceberMensagem", async (mensagem) =>
+		{
+			mensagens.Add(mensagem);
+			await InvokeAsync(StateHasChanged);
+		});
+	}
+
+
+
+
+	private async Task EnviarMensagem()
+	{
+		if(novaMensagem is not null)
+		{
+			await hubConnection.SendAsync("EnviarMensagem", "NomeDoUsuario", novaMensagem);
+			novaMensagem = "";
+		}
+
+		await Focus("txtMensagem");
+	}
+
+	public async Task Focus(string elementId)
+	{
+		await js.InvokeVoidAsync("focusById", elementId);
+	}
+
+}
+
+<script src="/Utilidade.js"></script>
