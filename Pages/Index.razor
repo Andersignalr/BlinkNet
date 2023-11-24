@@ -1,80 +1,129 @@
 ﻿@page "/"
 
+<style>
+    body {
+        background-color: #181a1b;
+        color: white;
+    }
+</style>
+
+@using Microsoft.AspNetCore.SignalR.Client
 
 @using BlinkNet.Data
-@using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.EntityFrameworkCore
 
 @inject IDbContextFactory<MensagemContext> DbFactory
 @inject NavigationManager Navigation
 @inject IJSRuntime js
+@implements IAsyncDisposable
 
 
-<input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress"/>
+<input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress" />
 <button id="btnEnviar" @onclick="EnviarMensagem">Enviar</button>
 
 <ul>
-	@foreach (var mensagem in mensagens)
-	{
-		<li>@mensagem</li>
-	}
+    @foreach (var mensagem in mensagens)
+    {
+        <li>@mensagem</li>
+    }
 </ul>
 
-@code{
-	private List<string> mensagens = new List<string>();
-	private string novaMensagem = "";
+@code {
+    private List<string> mensagens = new List<string>();
+    private string novaMensagem = "";
 
-	private HubConnection hubConnection;
+    private HubConnection hubConnection;
 
-	protected override async Task OnInitializedAsync()
-	{
-		using var context = DbFactory.CreateDbContext();
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
 
-		if (context.ChatMensagens is not null)
-		{
-			var chatMensagem = await context.ChatMensagens.AsQueryable().ToListAsync();
-		}
 
-		hubConnection = new HubConnectionBuilder()
-		.WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-		.Build();
-
-		hubConnection.On<string>("ReceberMensagem", async (mensagem) =>
-		{
-			mensagens.Add(mensagem);
-			await InvokeAsync(StateHasChanged);
-		});
-
-		await hubConnection.StartAsync();
-	}
+        if (context.ChatMensagens is not null)
+        {
+            var chatMensagens = await context.ChatMensagens.AsQueryable().ToListAsync();
+            foreach (var message in chatMensagens)
+            {
+                var encodedMsg = $"{message.Content}";
+                mensagens.Add(encodedMsg);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
 
 
 
+        if (hubConnection is null)
+        {
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+                .Build();
 
-	private async Task EnviarMensagem()
-	{
-		if(novaMensagem is not null)
-		{
-			await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
-			novaMensagem = "";
-		}
+            hubConnection.On<string>("ReceberMensagem", async (message) =>
+            {
+                using var context = DbFactory.CreateDbContext();
 
-		await Focus("txtMensagem");
-	}
+                if (context is not null && context.ChatMensagens is not null)
+                {
 
-	private async Task Focus(string elementId)
-	{
-		await js.InvokeVoidAsync("focusById", elementId);
-	}
 
-	private async Task OnKeyPress(KeyboardEventArgs e)
-	{
-		if(e.Key == "Enter")
-		{
-			await js.InvokeVoidAsync("pressButton", "btnEnviar");
-		}
-	}
+                    context.ChatMensagens.Add(new ChatMensagem
+                        {
+                            Content = message,
+                        });
 
+                    try
+                    {
+                        await context.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
+
+                    var encodedMsg = $"{message}";
+                    mensagens.Add(encodedMsg);
+                    await InvokeAsync(StateHasChanged);
+                }
+            });
+        }
+
+        await hubConnection.StartAsync();
+    }
+
+
+
+    private async Task EnviarMensagem()
+    {
+        if (novaMensagem is not null)
+        {
+            await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
+            novaMensagem = "";
+        }
+
+        await Focus("txtMensagem");
+    }
+
+    private async Task Focus(string elementId)
+    {
+        await js.InvokeVoidAsync("focusById", elementId);
+    }
+
+    private async Task OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await js.InvokeVoidAsync("pressButton", "btnEnviar");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
 }
+
 
 <script src="/Utilidade.js"></script>
