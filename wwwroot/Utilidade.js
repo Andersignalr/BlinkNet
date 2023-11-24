@@ -6,3 +6,10 @@ function focusById(elementId)
         element.focus();
     }
 }
+
+function pressButton(buttonId) {
+    var element = document.getElementById(buttonId);
+    if (element) {
+        element.click();
+    }
+}

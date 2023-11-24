@@ -1,13 +1,17 @@
 ﻿@page "/"
 
 
+@using BlinkNet.Data
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<MensagemContext> DbFactory
 @inject NavigationManager Navigation
 @inject IJSRuntime js
 
 
-<input type="text" @bind="novaMensagem"/>
-<button @onclick="EnviarMensagem">Enviar</button>
+<input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress"/>
+<button id="btnEnviar" @onclick="EnviarMensagem">Enviar</button>
 
 <ul>
 	@foreach (var mensagem in mensagens)
@@ -24,6 +28,13 @@
 
 	protected override async Task OnInitializedAsync()
 	{
+		using var context = DbFactory.CreateDbContext();
+
+		if (context.ChatMensagens is not null)
+		{
+			var chatMensagem = await context.ChatMensagens.AsQueryable().ToListAsync();
+		}
+
 		hubConnection = new HubConnectionBuilder()
 		.WithUrl(Navigation.ToAbsoluteUri("/chathub"))
 		.Build();
@@ -33,6 +44,8 @@
 			mensagens.Add(mensagem);
 			await InvokeAsync(StateHasChanged);
 		});
+
+		await hubConnection.StartAsync();
 	}
 
 
@@ -42,16 +55,24 @@
 	{
 		if(novaMensagem is not null)
 		{
-			await hubConnection.SendAsync("EnviarMensagem", "NomeDoUsuario", novaMensagem);
+			await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
 			novaMensagem = "";
 		}
 
 		await Focus("txtMensagem");
 	}
 
-	public async Task Focus(string elementId)
+	private async Task Focus(string elementId)
 	{
 		await js.InvokeVoidAsync("focusById", elementId);
+	}
+
+	private async Task OnKeyPress(KeyboardEventArgs e)
+	{
+		if(e.Key == "Enter")
+		{
+			await js.InvokeVoidAsync("pressButton", "btnEnviar");
+		}
 	}
 
 }
