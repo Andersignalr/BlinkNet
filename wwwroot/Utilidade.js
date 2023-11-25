@@ -1,4 +1,4 @@
-
+// Recebe um elemento html pelo ID e atribui o foco da tela a ele
 function focusById(elementId)
 {
     var element = document.getElementById(elementId);
@@ -7,6 +7,8 @@ function focusById(elementId)
     }
 }
 
+
+// Recebe um elemento pelo ID e ativa o evento de click dele
 function pressButton(buttonId) {
     var element = document.getElementById(buttonId);
     if (element) {

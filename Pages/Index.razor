@@ -1,12 +1,5 @@
 ﻿@page "/"
 
-<style>
-    body {
-        background-color: #181a1b;
-        color: white;
-    }
-</style>
-
 @using Microsoft.AspNetCore.SignalR.Client
 
 @using BlinkNet.Data
@@ -22,108 +15,125 @@
 <button id="btnEnviar" @onclick="EnviarMensagem">Enviar</button>
 
 <ul>
-    @foreach (var mensagem in mensagens)
-    {
-        <li>@mensagem</li>
-    }
+	@foreach (var mensagem in mensagens)
+	{
+		<li>@mensagem</li>
+	}
 </ul>
 
 @code {
-    private List<string> mensagens = new List<string>();
-    private string novaMensagem = "";
 
-    private HubConnection hubConnection;
+	// lista dinâmica de mensagens do banco de dados, que está associada ao HTML da página, semelhante a um "State" no React
+	private List<string> mensagens = new List<string>();
 
-    protected override async Task OnInitializedAsync()
-    {
-        using var context = DbFactory.CreateDbContext();
+	// variável que está associada ao input HTML, a mágica do razor acontecendo aqui
+	private string novaMensagem = "";
 
-
-        if (context.ChatMensagens is not null)
-        {
-            var chatMensagens = await context.ChatMensagens.AsQueryable().ToListAsync();
-            foreach (var message in chatMensagens)
-            {
-                var encodedMsg = $"{message.Content}";
-                mensagens.Add(encodedMsg);
-                await InvokeAsync(StateHasChanged);
-            }
-        }
+	// variável que armazenará a conexão SignalR para escutar e ativar eventos
+	private HubConnection hubConnection;
 
 
-
-        if (hubConnection is null)
-        {
-            hubConnection = new HubConnectionBuilder()
-                .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-                .Build();
-
-            hubConnection.On<string>("ReceberMensagem", async (message) =>
-            {
-                using var context = DbFactory.CreateDbContext();
-
-                if (context is not null && context.ChatMensagens is not null)
-                {
+	// Preparações a serem feitas ao iniciar o componente
+	protected override async Task OnInitializedAsync()
+	{
+		// Instancia um contexto da "fábrica de banco de dados", que será necessário pra fazer a comunicação entre a página e o banco.
+		using var context = DbFactory.CreateDbContext();
 
 
-                    context.ChatMensagens.Add(new ChatMensagem
-                        {
-                            Content = message,
-                        });
-
-                    try
-                    {
-                        await context.SaveChangesAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex);
-                    }
-
-                    var encodedMsg = $"{message}";
-                    mensagens.Add(encodedMsg);
-                    await InvokeAsync(StateHasChanged);
-                }
-            });
-        }
-
-        await hubConnection.StartAsync();
-    }
+		// Carrega as mensagens pré-existentes no banco de dados.
+		if (context.ChatMensagens is not null)
+		{
+			var chatMensagens = await context.ChatMensagens.AsQueryable().ToListAsync();
+			foreach (var message in chatMensagens)
+			{
+				var encodedMsg = $"{message.Content}";
+				mensagens.Add(encodedMsg);
+				await InvokeAsync(StateHasChanged);
+			}
+		}
 
 
 
-    private async Task EnviarMensagem()
-    {
-        if (novaMensagem is not null)
-        {
-            await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
-            novaMensagem = "";
-        }
+		if (hubConnection is null)
+		{
+			hubConnection = new HubConnectionBuilder()
+				.WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+				.Build();
 
-        await Focus("txtMensagem");
-    }
+			// Ao Receber uma mensagem, evento disparado pela conexão com o HUB, mostra o conteúdo na tela adicionando um li na lista
+			hubConnection.On<string>("ReceberMensagem", async (message) =>
+			{
+				var encodedMsg = $"{message}";
+				mensagens.Add(encodedMsg);
+				await InvokeAsync(StateHasChanged);
+			});
+		}
 
-    private async Task Focus(string elementId)
-    {
-        await js.InvokeVoidAsync("focusById", elementId);
-    }
 
-    private async Task OnKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            await js.InvokeVoidAsync("pressButton", "btnEnviar");
-        }
-    }
+		await hubConnection.StartAsync();
+	}
 
-    public async ValueTask DisposeAsync()
-    {
-        if (hubConnection is not null)
-        {
-            await hubConnection.DisposeAsync();
-        }
-    }
+
+	// Função / Tarefa que cuida da parte de envio de mensagem, seja pro HUB, seja pro Banco de dados
+	private async Task EnviarMensagem()
+	{
+		if (novaMensagem is not null)
+		{
+			#region salva mensagem no banco de dados
+
+			using var context = DbFactory.CreateDbContext();
+
+			if (context is not null && context.ChatMensagens is not null)
+			{
+
+				context.ChatMensagens.Add(new ChatMensagem
+					{
+						Content = novaMensagem,
+					});
+
+				try
+				{
+					await context.SaveChangesAsync();
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex);
+				}
+			}
+
+			#endregion
+
+			await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
+			novaMensagem = "";
+		}
+
+		await Focus("txtMensagem");
+	}
+
+	// Foca no input de digitar a mensagem, é usado após enviar a mensagem com sucesso, prepara pra receber uma nova mensagem
+	private async Task Focus(string elementId)
+	{
+		await js.InvokeVoidAsync("focusById", elementId);
+	}
+
+	// Ao pressionar a tecla enter no componente, provavelmente o input da mensagem, irá enviar a mensagem clicando no botão por javascript
+	private async Task OnKeyPress(KeyboardEventArgs e)
+	{
+		if (e.Key == "Enter")
+		{
+			await js.InvokeVoidAsync("pressButton", "btnEnviar");
+		}
+	}
+
+	//evita duplicação de eventos de conexão do HUB
+	public async ValueTask DisposeAsync()
+	{
+		if (hubConnection is not null)
+		{
+			await hubConnection.DisposeAsync();
+		}
+	}
 }
 
-
+@* arquivo javascript  com as funções usadas aqui e chamadas usando Interoperabilidade com javascript *@
 <script src="/Utilidade.js"></script>
