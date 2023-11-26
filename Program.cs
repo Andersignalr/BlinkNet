@@ -12,6 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
+
+//------------
+
+builder.Services.AddScoped<IUserService, UserService>();
+
+//------------
+
+
 // Serviço que adiciona a biblioteca que contém o Websocket pra comunicação em tempo real do chat
 builder.Services.AddSignalR();
 

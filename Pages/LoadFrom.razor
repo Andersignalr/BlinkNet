@@ -1,0 +1,52 @@
+﻿@inject IUserService UserService
+@inject IJSRuntime JSRuntime
+
+<input type="text" @bind="userName"/>
+<button @onclick="Login1">carregar</button>
+<button @onclick="Login2">mostrar</button>
+
+
+<h3>Olá, @UserService.GetUser()?.Nome!</h3>
+
+<button @onclick="Login">setar</button>
+
+@code {
+    private string userName = "";
+    // private string entrada;
+
+    private bool isPrerendering = true; // Inicialize como verdadeiro durante o pré-rendering
+
+    private async Task Login()
+    {
+        if (!string.IsNullOrEmpty(userName))
+        {
+            var user = new User { Nome = userName };
+
+            // Condição para evitar JSInterop durante o pré-rendering
+            if (!isPrerendering)
+            {
+                await UserService.SetUser(user);
+                await UserService.LoadUserFromLocalStorageAsync();
+            }
+        }
+    }
+
+    private async Task Login1()
+    {
+        await UserService.LoadUserFromLocalStorageAsync();
+    }
+
+    private void Login2()
+    {
+        userName = UserService.GetUser().Nome;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isPrerendering = false; // Atualize para falso após o primeiro render
+                                    // Se necessário, outras chamadas de JSInterop podem ser feitas aqui
+        }
+    }
+}
