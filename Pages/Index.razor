@@ -10,24 +10,7 @@
 @inject IJSRuntime js
 @implements IAsyncDisposable
 
-<style>
-	body {
-		background-color: #181a1b;
-		color: white;
-	}
-</style>
-
-<br />
-
-<LoadFrom/>
-
-<br />
-
-
-
-<br />
-
-<input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress" />
+@* <input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress" />
 <button id="btnEnviar" @onclick="EnviarMensagem">Enviar</button>
 
 <ul>
@@ -35,7 +18,29 @@
 	{
 		<li>@mensagem</li>
 	}
-</ul>
+</ul> *@
+
+
+<button id="btnEnviar" @onclick="EnviarMensagem" style="display: none;">Enviar</button>
+
+<div class="container">
+	<div class="chat-background">
+
+		<card>
+
+			@foreach (var mensagem in mensagens)
+			{
+				<mensagem>
+					@mensagem
+				</mensagem>
+			}
+
+				<input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type a message..." style="margin-top: auto;" />
+		</card>
+
+
+	</div>
+</div>
 
 @code {
 
@@ -93,7 +98,7 @@
 	// Função / Tarefa que cuida da parte de envio de mensagem, seja pro HUB, seja pro Banco de dados
 	private async Task EnviarMensagem()
 	{
-		if (novaMensagem is not null)
+		if (novaMensagem is not null && novaMensagem != "")
 		{
 			#region salva mensagem no banco de dados
 
@@ -153,3 +158,23 @@
 
 @* arquivo javascript  com as funções usadas aqui e chamadas usando Interoperabilidade com javascript *@
 <script src="/Utilidade.js"></script>
+
+@*
+	if(novaMensagem.Contains("/deleteAll"))
+		{
+			Console.WriteLine("identificou o delete");
+			using var context = DbFactory.CreateDbContext();
+			var todasMensagens = context.ChatMensagens.ToList();
+			Console.WriteLine($"Número de mensagens a serem excluídas: {todasMensagens.Count}");
+			context.ChatMensagens.RemoveRange(todasMensagens);
+
+			try
+			{
+				await context.SaveChangesAsync();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex);
+			}
+		}
+*@
