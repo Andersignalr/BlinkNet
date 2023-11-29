@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/{UserName?}"
 
 @using Microsoft.AspNetCore.SignalR.Client
 
@@ -20,6 +20,10 @@
 	}
 </ul> *@
 
+@if (!string.IsNullOrEmpty(UserName))
+{
+	<p><b>Hi, @UserName!</b></p>
+}
 
 <button id="btnEnviar" @onclick="EnviarMensagem" style="display: none;">Enviar</button>
 
@@ -35,7 +39,7 @@
 				</mensagem>
 			}
 
-				<input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type a message..." style="margin-top: auto;" />
+				<input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type a message..." />
 		</card>
 
 
@@ -43,6 +47,9 @@
 </div>
 
 @code {
+
+	[Parameter]
+	public string UserName { get; set; } = "";
 
 	// lista dinâmica de mensagens do banco de dados, que está associada ao HTML da página, semelhante a um "State" no React
 	private List<string> mensagens = new List<string>();
@@ -124,7 +131,14 @@
 
 			#endregion
 
-			await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
+			try
+			{
+				await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"\n{ex.Message}\n");
+			}
 			novaMensagem = "";
 		}
 

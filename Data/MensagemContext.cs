@@ -13,6 +13,8 @@ public class MensagemContext : DbContext
 	// Cria um contexto onde terá uma tabela no banco de dados SQLite que corresponde a classe de mensagens do chat
 	public DbSet<ChatMensagem>? ChatMensagens { get; set; }
 
+	public DbSet<Person>? People { get; set; }
+
 
 	/*
 	public MensagemContext(DbContextOptions<MensagemContext> options) : base(options)

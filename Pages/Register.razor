@@ -1,0 +1,92 @@
+﻿@page "/register"
+
+@using Microsoft.AspNetCore.SignalR.Client
+
+@using BlinkNet.Data
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<MensagemContext> DbFactory
+@inject NavigationManager Navigation
+@inject IJSRuntime js
+
+@implements IAsyncDisposable
+
+
+<card>
+	<p style="color: #123; font-size: 22px;"><b>		Register	</b></p>
+
+	<input type="text" placeholder="Name..." @bind="Name" />
+	<input type="text" placeholder="Login..." @bind="UserName" />
+	<input type="password" placeholder="Password..." @bind="Password" />
+
+	<button id="btnRegistrar" @onclick="RegistrarUsuario">Register</button>
+</card>
+
+@* <button id="btnEnviar" @onclick="EnviarMensagem" style="display: none;">Enviar</button> *@
+
+@code {
+
+	private string Name = "";
+
+	private string UserName = "";
+
+	private string Password = "";
+
+	protected override async Task OnInitializedAsync()
+	{
+
+	}
+
+	private async Task RegistrarUsuario()
+	{
+		if (Name != "")
+		{
+			using var context = DbFactory.CreateDbContext();
+
+			if (context is not null && context.People is not null)
+			{
+				if (context.People is not null)
+				{
+					var novoUsuario = await context.People
+					.Where(p => p.UserName == UserName)
+					.FirstOrDefaultAsync();
+
+
+					if (novoUsuario == null)
+					{
+
+						context.People.Add(new Person
+							{
+								Name = Name,
+								UserName = UserName,
+								Password = Password
+							});
+
+						try
+						{
+							await context.SaveChangesAsync();
+						}
+						catch (Exception ex)
+						{
+							Console.WriteLine(ex);
+						}
+
+						Navigation.NavigateTo($"/login/{UserName}");
+						await js.InvokeVoidAsync("location.reload");
+					}
+					else
+					{
+						Console.WriteLine("Este usuário ja existe");
+					}
+				}
+			}
+		}
+
+	}
+
+
+	public async ValueTask DisposeAsync()
+	{
+
+	}
+}

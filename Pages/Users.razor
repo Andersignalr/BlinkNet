@@ -1,0 +1,44 @@
+﻿@page "/Users"
+
+
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<MensagemContext> DbFactory
+
+
+@using BlinkNet.Data;
+
+<card>
+	<p style="color: #123; font-size: 22px;"><b>		Usuários Cadastrados	</b></p>
+
+	@foreach (var person in people)
+	{
+		<mensagem>
+			@person
+		</mensagem>
+	}
+
+</card>
+
+@code {
+		List<string> people = new List<string>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Instancia um contexto da "fábrica de banco de dados", que será necessário pra fazer a comunicação entre a página e o banco.
+		using var context = DbFactory.CreateDbContext();
+
+
+		// Carrega as mensagens pré-existentes no banco de dados.
+		if (context.People is not null)
+		{
+			var ListPeople = await context.People.AsQueryable().ToListAsync();
+			foreach (var person in ListPeople)
+			{
+				var encodedMsg = $"{person.Name}";
+				people.Add(encodedMsg);
+				await InvokeAsync(StateHasChanged);
+			}
+		}
+	}
+}

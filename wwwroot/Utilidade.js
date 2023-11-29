@@ -15,3 +15,7 @@ function pressButton(buttonId) {
         element.click();
     }
 }
+
+function testeNTS() {
+    console.log("O js esta carregado.");
+}

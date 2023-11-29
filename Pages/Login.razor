@@ -1,0 +1,66 @@
+﻿@page "/login/{UserName?}"
+
+
+@using Microsoft.EntityFrameworkCore
+
+@using BlinkNet.Data
+
+@inject IDbContextFactory<MensagemContext> DbFactory
+
+@inject NavigationManager Navigation
+@inject IJSRuntime js
+
+<card>
+	<p style="color: #123; font-size: 22px;"><b>login</b></p>
+
+	<input type="text" placeholder="Login..." @bind="UserName" />
+	<input type="password" placeholder="Password..." @bind="Password" />
+
+	<button id="btnLogin" @onclick="BuscaUsuario">Login</button>
+</card>
+
+@code {
+
+	[Parameter]
+	public string UserName { get; set; } = "";
+
+	public string Password { get; set; } = "";
+
+	protected override async Task OnInitializedAsync()
+	{
+
+	}
+
+	private async Task BuscaUsuario()
+	{
+		if (UserName != "")
+		{
+			using var context = DbFactory.CreateDbContext();
+
+			if (context is not null && context.People is not null)
+			{
+				if (context.People is not null)
+				{
+					var usuarioExistente = await context.People
+					.Where(p => p.UserName == UserName && p.Password == Password)
+					.FirstOrDefaultAsync();
+
+
+					if (usuarioExistente != null)
+					{
+						Console.WriteLine("Existe este usuario");
+						Navigation.NavigateTo($"/{UserName}");
+						await js.InvokeVoidAsync("location.reload");
+					}
+
+					else
+					{
+						Console.WriteLine("\n" + "Usuario não existe no banco de dados----------------");
+					}
+				}
+			}
+		}
+
+	}
+
+}
