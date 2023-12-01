@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 public interface IUserService
 {
     User GetUser();
-    Task SetUser(User user);
-    Task LoadUserFromLocalStorageAsync();
+    void SetUser(User user);
+    Task SetUserFromLocalStorageAsync();
+    Task GetUserFromLocalStorageAsync();
     Task ClearUser();
 }
 
@@ -27,13 +28,17 @@ public class UserService : IUserService
         return _user;
     }
 
-    public async Task SetUser(User user)
+    public void SetUser(User user)
     {
         _user = user;
+    }
+
+    public async Task SetUserFromLocalStorageAsync()
+    {
         await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "user", JsonSerializer.Serialize(_user));
     }
 
-    public async Task LoadUserFromLocalStorageAsync()
+    public async Task GetUserFromLocalStorageAsync()
     {
         var storedUserJson = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "user");
         if (!string.IsNullOrEmpty(storedUserJson))

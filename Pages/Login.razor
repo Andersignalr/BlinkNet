@@ -7,60 +7,77 @@
 
 @inject IDbContextFactory<MensagemContext> DbFactory
 
+@inject IPersonService PersonService
+
 @inject NavigationManager Navigation
 @inject IJSRuntime js
 
 <card>
-	<p style="color: #123; font-size: 22px;"><b>login</b></p>
+    <p style="color: #123; font-size: 22px;"><b>login</b></p>
 
-	<input type="text" placeholder="Login..." @bind="UserName" />
-	<input type="password" placeholder="Password..." @bind="Password" />
+    <input type="text" placeholder="Login..." @bind="UserName" />
+    <input type="password" placeholder="Password..." @bind="Password" />
 
-	<button id="btnLogin" @onclick="BuscaUsuario">Login</button>
+    <div style="width: 100%; display:flex; flex-direction: row; justify-content: space-between;">
+
+        <button id="btnLogin" @onclick="BuscaUsuario">Login</button>
+        <a @onclick="Register"><button>Register</button></a>
+    </div>
 </card>
 
 @code {
 
-	[Parameter]
-	public string UserName { get; set; } = "";
+    [Parameter]
+    public string UserName { get; set; } = "";
 
-	public string Password { get; set; } = "";
+    public string Password { get; set; } = "";
 
-	protected override async Task OnInitializedAsync()
-	{
+    protected override async Task OnInitializedAsync()
+    {
 
-	}
+    }
 
-	private async Task BuscaUsuario()
-	{
-		if (UserName != "")
-		{
-			using var context = DbFactory.CreateDbContext();
+    private async Task BuscaUsuario()
+    {
+        if (UserName != "")
+        {
+            using var context = DbFactory.CreateDbContext();
 
-			if (context is not null && context.People is not null)
-			{
-				if (context.People is not null)
-				{
-					var usuarioExistente = await context.People
-					.Where(p => p.UserName == UserName && p.Password == Password)
-					.FirstOrDefaultAsync();
+            if (context is not null && context.People is not null)
+            {
+                if (context.People is not null)
+                {
+                    var usuarioExistente = await context.People
+                    .Where(p => p.UserName == UserName && p.Password == Password)
+                    .FirstOrDefaultAsync();
 
 
-					if (usuarioExistente != null)
-					{
-						Console.WriteLine("Existe este usuario");
-						Navigation.NavigateTo($"/{UserName}");
-						await js.InvokeVoidAsync("location.reload");
-					}
+                    if (usuarioExistente != null)
+                    {
+                        Console.WriteLine("Existe este usuario");
 
-					else
-					{
-						Console.WriteLine("\n" + "Usuario não existe no banco de dados----------------");
-					}
-				}
-			}
-		}
+                        PersonService.SetPerson(usuarioExistente);
+                        await PersonService.SetPersonFromLocalStorageAsync();
 
-	}
+                        Navigation.NavigateTo($"/");
+                        await js.InvokeVoidAsync("location.reload");
+                    }
+
+                    else
+                    {
+                        Console.WriteLine("\n" + "Usuario não existe no banco de dados----------------");
+                    }
+                }
+            }
+        }
+
+    }
+
+    private async Task Register()
+    {
+        await PersonService.ClearPerson();
+        // await js.InvokeVoidAsync("location.reload");
+        await js.InvokeVoidAsync("window.location.assign", "/register");
+    }
 
 }

@@ -27,15 +27,15 @@
             // Condição para evitar JSInterop durante o pré-rendering
             if (!isPrerendering)
             {
-                await UserService.SetUser(user);
-                await UserService.LoadUserFromLocalStorageAsync();
+                UserService.SetUser(user);
+                await UserService.GetUserFromLocalStorageAsync();
             }
         }
     }
 
     private async Task Login1()
     {
-        await UserService.LoadUserFromLocalStorageAsync();
+        await UserService.GetUserFromLocalStorageAsync();
     }
 
     private void Login2()

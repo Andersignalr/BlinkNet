@@ -1,9 +1,12 @@
-﻿@page "/{UserName?}"
+﻿@page "/"
 
 @using Microsoft.AspNetCore.SignalR.Client
 
 @using BlinkNet.Data
 @using Microsoft.EntityFrameworkCore
+
+
+@inject IPersonService PersonService
 
 @inject IDbContextFactory<MensagemContext> DbFactory
 @inject NavigationManager Navigation
@@ -22,152 +25,183 @@
 
 @if (!string.IsNullOrEmpty(UserName))
 {
-	<p><b>Hi, @UserName!</b></p>
+    <card style="min-height:auto; padding: 5px; flex-direction: row; justify-content: space-between">
+        <p><b style="color: black;">Hi, @UserName! </b></p><a @onclick="Logout"><button style="margin: 2px; padding: 4px 8px;">Logout</button></a>
+    </card>
+}
+else
+{
+    <a href="\login"><button>Login</button></a>
 }
 
 <button id="btnEnviar" @onclick="EnviarMensagem" style="display: none;">Enviar</button>
 
 <div class="container">
-	<div class="chat-background">
+    <div class="chat-background">
 
-		<card>
+        <card>
 
-			@foreach (var mensagem in mensagens)
-			{
-				<mensagem>
-					@mensagem
-				</mensagem>
-			}
+            @foreach (var mensagem in mensagens)
+            {
+                <mensagem>
+                    @mensagem
+                </mensagem>
+            }
 
-				<input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type a message..." />
-		</card>
+            <input id="txtMensagem" type="text" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type a message..." />
+        </card>
 
-
-	</div>
+    </div>
 </div>
 
 @code {
 
-	[Parameter]
-	public string UserName { get; set; } = "";
+    public string UserName = "";
 
-	// lista dinâmica de mensagens do banco de dados, que está associada ao HTML da página, semelhante a um "State" no React
-	private List<string> mensagens = new List<string>();
+    // lista dinâmica de mensagens do banco de dados, que está associada ao HTML da página, semelhante a um "State" no React
+    private List<string> mensagens = new List<string>();
 
-	// variável que está associada ao input HTML, a mágica do razor acontecendo aqui
-	private string novaMensagem = "";
+    // variável que está associada ao input HTML, a mágica do razor acontecendo aqui
+    private string novaMensagem = "";
 
-	// variável que armazenará a conexão SignalR para escutar e ativar eventos
-	private HubConnection hubConnection;
-
-
-	// Preparações a serem feitas ao iniciar o componente
-	protected override async Task OnInitializedAsync()
-	{
-		// Instancia um contexto da "fábrica de banco de dados", que será necessário pra fazer a comunicação entre a página e o banco.
-		using var context = DbFactory.CreateDbContext();
+    // variável que armazenará a conexão SignalR para escutar e ativar eventos
+    private HubConnection hubConnection;
 
 
-		// Carrega as mensagens pré-existentes no banco de dados.
-		if (context.ChatMensagens is not null)
-		{
-			var chatMensagens = await context.ChatMensagens.AsQueryable().ToListAsync();
-			foreach (var message in chatMensagens)
-			{
-				var encodedMsg = $"{message.Content}";
-				mensagens.Add(encodedMsg);
-				await InvokeAsync(StateHasChanged);
-			}
-		}
+    // Preparações a serem feitas ao iniciar o componente
+    protected override async Task OnInitializedAsync()
+    {
+        // Instancia um contexto da "fábrica de banco de dados", que será necessário pra fazer a comunicação entre a página e o banco.
+        using var context = DbFactory.CreateDbContext();
+
+
+        // Carrega as mensagens pré-existentes no banco de dados.
+        if (context.ChatMensagens is not null)
+        {
+            var chatMensagens = await context.ChatMensagens.AsQueryable().ToListAsync();
+            foreach (var message in chatMensagens)
+            {
+                var encodedMsg = $"{message.Content}";
+                mensagens.Add(encodedMsg);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
 
 
 
-		if (hubConnection is null)
-		{
-			hubConnection = new HubConnectionBuilder()
-				.WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-				.Build();
+        if (hubConnection is null)
+        {
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+                .Build();
 
-			// Ao Receber uma mensagem, evento disparado pela conexão com o HUB, mostra o conteúdo na tela adicionando um li na lista
-			hubConnection.On<string>("ReceberMensagem", async (message) =>
-			{
-				var encodedMsg = $"{message}";
-				mensagens.Add(encodedMsg);
-				await InvokeAsync(StateHasChanged);
-			});
-		}
-
-
-		await hubConnection.StartAsync();
-	}
+            // Ao Receber uma mensagem, evento disparado pela conexão com o HUB, mostra o conteúdo na tela adicionando um li na lista
+            hubConnection.On<string>("ReceberMensagem", async (message) =>
+            {
+                var encodedMsg = $"{message}";
+                mensagens.Add(encodedMsg);
+                await InvokeAsync(StateHasChanged);
+            });
+        }
 
 
-	// Função / Tarefa que cuida da parte de envio de mensagem, seja pro HUB, seja pro Banco de dados
-	private async Task EnviarMensagem()
-	{
-		if (novaMensagem is not null && novaMensagem != "")
-		{
-			#region salva mensagem no banco de dados
+        await hubConnection.StartAsync();
+    }
 
-			using var context = DbFactory.CreateDbContext();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await PersonService.GetPersonFromLocalStorageAsync();
+            UserName = PersonService.GetPerson()?.UserName ?? "";
+            await InvokeAsync(StateHasChanged);
 
-			if (context is not null && context.ChatMensagens is not null)
-			{
+        }
 
-				context.ChatMensagens.Add(new ChatMensagem
-					{
-						Content = novaMensagem,
-					});
+    }
 
-				try
-				{
-					await context.SaveChangesAsync();
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine(ex);
-				}
-			}
 
-			#endregion
+    // Função / Tarefa que cuida da parte de envio de mensagem, seja pro HUB, seja pro Banco de dados
+    private async Task EnviarMensagem()
+    {
+        if (PersonService.GetPerson() is not null)
+        {
 
-			try
-			{
-				await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"\n{ex.Message}\n");
-			}
-			novaMensagem = "";
-		}
+            if (novaMensagem is not null && novaMensagem != "")
+            {
+                #region salva mensagem no banco de dados
 
-		await Focus("txtMensagem");
-	}
+                using var context = DbFactory.CreateDbContext();
 
-	// Foca no input de digitar a mensagem, é usado após enviar a mensagem com sucesso, prepara pra receber uma nova mensagem
-	private async Task Focus(string elementId)
-	{
-		await js.InvokeVoidAsync("focusById", elementId);
-	}
+                if (context is not null && context.ChatMensagens is not null)
+                {
 
-	// Ao pressionar a tecla enter no componente, provavelmente o input da mensagem, irá enviar a mensagem clicando no botão por javascript
-	private async Task OnKeyPress(KeyboardEventArgs e)
-	{
-		if (e.Key == "Enter")
-		{
-			await js.InvokeVoidAsync("pressButton", "btnEnviar");
-		}
-	}
+                    context.ChatMensagens.Add(new ChatMensagem
+                        {
+                            Content = novaMensagem,
+                        });
 
-	//evita duplicação de eventos de conexão do HUB
-	public async ValueTask DisposeAsync()
-	{
-		if (hubConnection is not null)
-		{
-			await hubConnection.DisposeAsync();
-		}
-	}
+                    try
+                    {
+                        await context.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
+                }
+
+                #endregion
+
+                try
+                {
+                    await hubConnection.SendAsync("EnviarMensagem", novaMensagem);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"\n{ex.Message}\n");
+                }
+                novaMensagem = "";
+            }
+            await Focus("txtMensagem");
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "você não está logado");
+        }
+
+    }
+
+    // Foca no input de digitar a mensagem, é usado após enviar a mensagem com sucesso, prepara pra receber uma nova mensagem
+    private async Task Focus(string elementId)
+    {
+        await js.InvokeVoidAsync("focusById", elementId);
+    }
+
+    // Ao pressionar a tecla enter no componente, provavelmente o input da mensagem, irá enviar a mensagem clicando no botão por javascript
+    private async Task OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await js.InvokeVoidAsync("pressButton", "btnEnviar");
+        }
+    }
+
+    private async Task Logout()
+    {
+        await PersonService.ClearPerson();
+        // await js.InvokeVoidAsync("location.reload");
+        await js.InvokeVoidAsync("window.location.assign", "/login");
+    }
+
+    //evita duplicação de eventos de conexão do HUB
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
 }
 
 @* arquivo javascript  com as funções usadas aqui e chamadas usando Interoperabilidade com javascript *@

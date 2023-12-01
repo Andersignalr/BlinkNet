@@ -16,8 +16,8 @@
 	<p style="color: #123; font-size: 22px;"><b>		Register	</b></p>
 
 	<input type="text" placeholder="Name..." @bind="Name" />
-	<input type="text" placeholder="Login..." @bind="UserName" />
-	<input type="password" placeholder="Password..." @bind="Password" />
+	<input type="text" placeholder="Login..." @bind="UserName" autocomplete="off" />
+	<input type="password" placeholder="Password..." @bind="Password" autocomplete="off" />
 
 	<button id="btnRegistrar" @onclick="RegistrarUsuario">Register</button>
 </card>

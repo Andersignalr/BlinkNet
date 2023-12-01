@@ -16,6 +16,7 @@ builder.Services.AddServerSideBlazor();
 //------------
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPersonService, PersonService>();
 
 //------------
 
