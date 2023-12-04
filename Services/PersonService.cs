@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 public interface IPersonService
 {
-	Person GetPerson();
-	void SetPerson(Person person);
+	Person? GetPerson();
+	void SetPerson(Person? person);
 	Task SetPersonFromLocalStorageAsync();
 	Task GetPersonFromLocalStorageAsync();
 	Task ClearPerson();
@@ -15,7 +15,7 @@ public interface IPersonService
 
 public class PersonService : IPersonService
 {
-	private Person _person;
+	private Person? _person;
 
 	private readonly IJSRuntime _jsRuntime;
 
@@ -24,12 +24,9 @@ public class PersonService : IPersonService
 		_jsRuntime = jsRuntime;
 	}
 
-	public Person GetPerson()
-	{
-		return _person;
-	}
+	public Person? GetPerson() => _person;
 
-	public void SetPerson(Person person)
+	public void SetPerson(Person? person)
 	{
 		_person = person;
 	}

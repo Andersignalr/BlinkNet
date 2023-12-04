@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 100px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 99;
+}
+
+.logo {
+    font-size: 2em;
+    color: #fff;
+    user-select: none;
+}
+
+.navigation a {
+    position: relative;
+    font-size: 1.1em;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 40px;
+}
+
+    .navigation a::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -6px;
+        width: 100%;
+        height: 3px;
+        background: #fff;
+        border-radius: 5px;
+        transform-origin: right;
+        transform: scaleX(0);
+        transition: transform .5s;
+    }
+
+    .navigation a:hover::after {
+        transform-origin: left;
+        transform: scaleX(1);
+    }
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: url(./background.jpg) no-repeat;
+    background-size: cover;
+    background-position: center;
+}
+
+container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    background-color: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 30px rgba(0, 0, 0, .5);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.input-area {
+    width: 80%;
+    margin-top: auto;
+}
+
+.input-message {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    background-color: rgba(21, 40, 55, 0.8);
+    border-radius: 10px;
+}
+
+    .input-message input {
+        width: 100%;
+        height: 100%;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        font-size: 1em;
+        color: white;
+        font-weight: 500;
+        padding: 0 30px 0 10px;
+    }
+
+        .input-message input::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+    .input-message button {
+        position: absolute;
+        bottom: 22px;
+        right: 15px;
+        border: none;
+        outline: none;
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+        width: 15px;
+        height: 15px;
+        font-size: 20px;
+        color: white;
+        cursor: pointer;
+    }
+
+.container-chat {
+    padding: 10px 0;
+    overflow-y: auto;
+    width: 100%;
+    align-self: flex-start;
+}
+
+    .container-chat::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .container-chat::-webkit-scrollbar-track {
+        background-color: rgba(21, 40, 55, 0.3);
+        border-radius: 10px;
+    }
+
+    .container-chat::-webkit-scrollbar-thumb {
+        background-color: #162938;
+        border-radius: 10px;
+    }
+
+.chat-area {
+    box-sizing: content-box;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    gap: 10px;
+}
+
+
+mensagem {
+    margin: 0 10px;
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 0 5px 5px 5px;
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, .4);
+    font-weight: 500;
+}
+
+    mensagem:hover {
+        box-shadow: 0px 0px 4px rgba(0, 0, 0, 1);
+    }
+
+.profile-area {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 10px;
+}
+
+    .profile-area name {
+        background-color: rgba(21, 40, 55, 0.8);
+        color: white;
+        border-radius: 10px 0;
+        padding: 0 10px;
+        font-weight: 500;
+    }
+
+    .profile-area .image {
+        height: 40px;
+        width: 40px;
+        border-radius: 100%;
+        background-image: url(../images/perfil-image.jpg);
+        background-size: cover;
+        background-position: center;
+    }
