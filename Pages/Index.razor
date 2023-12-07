@@ -92,12 +92,14 @@ else
 	}
 
 
-	<div class="input-area">
+	<InputMessage OnSendMessage="EnviarMensagem" />
+
+@* 	<div class="input-area">
 		<div class="input-message">
 			<input type="text" id="txtMensagem" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type your message here..." />
 			<button id="btnEnviar" @onclick="EnviarMensagem"><ion-icon name="send"></ion-icon></button>
 		</div>
-	</div>
+	</div> *@
 </container>
 
 <script src="/js/script.js"></script>
@@ -114,7 +116,7 @@ else
 	private List<string> mensagens = new List<string>();
 
 	// variável que está associada ao input HTML, a mágica do razor acontecendo aqui
-	private string novaMensagem = "";
+	// private string novaMensagem = "";
 
 	// variável que armazenará a conexão SignalR para escutar e ativar eventos
 	private HubConnection hubConnection;
@@ -174,13 +176,14 @@ else
 
 
 	// Função / Tarefa que cuida da parte de envio de mensagem, seja pro HUB, seja pro Banco de dados
-	private async Task EnviarMensagem()
+	private async Task EnviarMensagem(string novaMensagem)
 	{
 		if (PersonService.GetPerson() is not null)
 		{
 
 			if (novaMensagem is not null && novaMensagem != "")
 			{
+				Console.WriteLine("chamou aqui ein" + novaMensagem);
 				#region salva mensagem no banco de dados
 
 				using var context = DbFactory.CreateDbContext();

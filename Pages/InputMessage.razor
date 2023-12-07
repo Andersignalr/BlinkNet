@@ -1,0 +1,41 @@
+﻿@inject IJSRuntime js
+
+
+
+<div class="input-area">
+	<div class="input-message">
+		<input type="text" id="txtMensagem" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type your message here..." />
+		<button id="btnEnviar" @onclick="EnviarMensagem"><ion-icon name="send"></ion-icon></button>
+	</div>
+</div>
+
+@code {
+	[Parameter]
+	public EventCallback<string> OnSendMessage { get; set; }
+
+	private string novaMensagem = "";
+
+	private async Task EnviarMensagem()
+	{
+		await OnSendMessage.InvokeAsync(novaMensagem);
+		novaMensagem = "";
+	}
+
+	private async Task OnKeyPress(KeyboardEventArgs e)
+	{
+		if (e.Key == "Enter")
+		{
+			await js.InvokeVoidAsync("pressButton", "btnEnviar");
+		}
+	}
+
+	// private async Task OnKeyPress(KeyboardEventArgs e)
+	// {
+	// 	if (e.Key == "Enter")
+	// 	{
+	// 		Console.WriteLine("Chegou aqui");
+	// 		await OnSendMessage.InvokeAsync(novaMensagem);
+	// 		novaMensagem = "";
+	// 	}
+	// }
+}
