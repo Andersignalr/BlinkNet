@@ -33,8 +33,8 @@ var app = builder.Build();
 
 // Basicamente cria as tabelas do banco de dados caso não existam
 await using var scope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateAsyncScope();
-var options = scope.ServiceProvider.GetRequiredService<DbContextOptions<MensagemContext>>();
-await DatabaseUtility.EnsureDbCreatedAsync(options);
+var context = scope.ServiceProvider.GetRequiredService<MensagemContext>();
+await context.Database.EnsureCreatedAsync();
 
 if (!app.Environment.IsDevelopment())
 {
