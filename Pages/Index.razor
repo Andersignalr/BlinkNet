@@ -94,11 +94,11 @@ else
 
 	<InputMessage OnSendMessage="EnviarMensagem" />
 
-@* 	<div class="input-area">
-		<div class="input-message">
-			<input type="text" id="txtMensagem" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type your message here..." />
-			<button id="btnEnviar" @onclick="EnviarMensagem"><ion-icon name="send"></ion-icon></button>
-		</div>
+	@* 	<div class="input-area">
+	<div class="input-message">
+	<input type="text" id="txtMensagem" @bind="novaMensagem" @onkeypress="OnKeyPress" placeholder="Type your message here..." />
+	<button id="btnEnviar" @onclick="EnviarMensagem"><ion-icon name="send"></ion-icon></button>
+	</div>
 	</div> *@
 </container>
 
@@ -137,8 +137,8 @@ else
 			{
 				var encodedMsg = $"{message.Content}";
 				mensagens.Add(encodedMsg);
-				await InvokeAsync(StateHasChanged);
 			}
+			await InvokeAsync(StateHasChanged);
 		}
 
 
